@@ -1,10 +1,13 @@
+//const htmlWebpackPlugin = require('html-webpack-plugin');
 const ExtractTextPlugin = require('extract-text-webpack-plugin');
 // css样式从js文件中分离出来，需要通过命令行安装 extract-text-webpack-plugin 依赖包
 
 module.exports = {
-    entry: './app.js',
+    entry: {
+        dist: './app.js'
+    },
     output: {
-        path: __dirname + '/dist',
+        path: './dist/',
         filename: 'bundle.js'
     },
     module: {
@@ -34,6 +37,10 @@ module.exports = {
         inline: true
     },
     plugins: [
+        /*new htmlWebpackPlugin({
+            title: '测试html',
+            chunks: ['dist']
+        }),*/
         new ExtractTextPlugin('style.css')  // 提取出来的样式放在style.css文件中
     ],
     resolve: {
