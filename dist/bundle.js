@@ -70,14 +70,16 @@
 
 	// react一定要引入进来，不然会报错
 	var store = (0, _redux.createStore)(_reducers2.default);
-	//import { addTodo, toggleTodo, setVisibilityFilter, VisibilityFilter } from './actions/actions';
-
 
 	_reactDom2.default.render(_react2.default.createElement(
 	    _reactRedux.Provider,
 	    { store: store },
 	    _react2.default.createElement(_App2.default, null)
 	), document.getElementById('app'));
+
+	store.subscribe(function () {
+	    console.log(store.getState());
+	});
 
 /***/ },
 /* 1 */
@@ -24054,6 +24056,8 @@
 
 	var _react2 = _interopRequireDefault(_react);
 
+	var _reactRedux = __webpack_require__(23);
+
 	var _AddTodo = __webpack_require__(219);
 
 	var _AddTodo2 = _interopRequireDefault(_AddTodo);
@@ -24061,6 +24065,12 @@
 	var _TodoList = __webpack_require__(220);
 
 	var _TodoList2 = _interopRequireDefault(_TodoList);
+
+	var _Footer = __webpack_require__(222);
+
+	var _Footer2 = _interopRequireDefault(_Footer);
+
+	var _actions = __webpack_require__(217);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -24082,21 +24092,29 @@
 	    _createClass(App, [{
 	        key: 'render',
 	        value: function render() {
+
+	            // 通过调用 connect() 注入：
+	            var _props = this.props,
+	                dispatch = _props.dispatch,
+	                visibilityTodos = _props.visibilityTodos,
+	                visibilityFilter = _props.visibilityFilter;
+
+
 	            return _react2.default.createElement(
 	                'div',
 	                null,
 	                _react2.default.createElement(_AddTodo2.default, { onAddClick: function onAddClick(text) {
-	                        return console.log('add todo', text);
+	                        return dispatch((0, _actions.addTodo)(text));
 	                    } }),
-	                _react2.default.createElement(_TodoList2.default, { todos: [{
-	                        text: 'use redux',
-	                        completed: true
-	                    }, {
-	                        text: 'Learn to connect it to redux',
-	                        completed: false
-	                    }],
+	                _react2.default.createElement(_TodoList2.default, { todos: visibilityTodos,
 	                    onTodoClick: function onTodoClick(index) {
-	                        return console.log('todo clicked', index);
+	                        return dispatch((0, _actions.toggleTodo)(index));
+	                    }
+	                }),
+	                _react2.default.createElement(_Footer2.default, {
+	                    filter: visibilityFilter,
+	                    onFilterChange: function onFilterChange(filter) {
+	                        dispatch((0, _actions.setVisibilityFilter)(filter));
 	                    }
 	                })
 	            );
@@ -24106,7 +24124,39 @@
 	    return App;
 	}(_react.Component);
 
-	exports.default = App;
+	App.PropTypes = {
+	    visibilityTodos: _react.PropTypes.arrayOf({
+	        text: _react.PropTypes.string.isRequired,
+	        completed: _react.PropTypes.bool.isRequired
+	    }),
+	    visibilityFilter: _react.PropTypes.oneOf(['SHOW_ALL', 'SHOW_COMPLETE', 'SHOW_ACTIVE']).isRequired
+	};
+
+	function selectTodos(todos, filter) {
+	    switch (filter) {
+	        case _actions.VisibilityFilter.SHOW_ALL:
+	            return todos;
+	        case _actions.VisibilityFilter.SHOW_ACTIVE:
+	            return todos.filter(function (todo) {
+	                return !todo.completed;
+	            });
+	        case _actions.VisibilityFilter.SHOW_COMPLETE:
+	            return todos.filter(function (todo) {
+	                return todo.completed;
+	            });
+	    }
+	}
+
+	// 基于全局state，哪些是我们想注入的props？
+	// 注意：使用 https://github.com/reactjs/reselect 效果更佳
+	function select(state) {
+	    return {
+	        visibilityTodos: selectTodos(state.todos, state.visibilityFilter),
+	        visibilityFilter: state.visibilityFilter
+	    };
+	}
+
+	exports.default = (0, _reactRedux.connect)(select)(App);
 
 /***/ },
 /* 219 */
@@ -24163,6 +24213,8 @@
 	        key: 'handleClick',
 	        value: function handleClick() {
 	            var node = this.refs.input;
+	            var text = node.value;
+	            if (text == '') return;
 	            this.props.onAddClick(node.value);
 	            node.value = '';
 	        }
@@ -24246,6 +24298,15 @@
 
 	exports.default = TodoList;
 
+
+	TodoList.PropTypes = {
+	    onTodoClick: _react.PropTypes.func.isRequired,
+	    todos: _react.PropTypes.arrayOf(_react.PropTypes.shape({
+	        text: _react.PropTypes.string.isRequired,
+	        completed: _react.PropTypes.bool.isRequired
+	    }))
+	};
+
 /***/ },
 /* 221 */
 /***/ function(module, exports, __webpack_require__) {
@@ -24310,6 +24371,88 @@
 	    text: _react.PropTypes.string.isRequired,
 	    completed: _react.PropTypes.bool.isRequired,
 	    onClick: _react.PropTypes.func.isRequired
+	};
+
+/***/ },
+/* 222 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+	var _react = __webpack_require__(25);
+
+	var _react2 = _interopRequireDefault(_react);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+	var Footer = function (_Component) {
+	    _inherits(Footer, _Component);
+
+	    function Footer() {
+	        _classCallCheck(this, Footer);
+
+	        return _possibleConstructorReturn(this, (Footer.__proto__ || Object.getPrototypeOf(Footer)).apply(this, arguments));
+	    }
+
+	    _createClass(Footer, [{
+	        key: 'readFilter',
+	        value: function readFilter(filter, name) {
+	            var _this2 = this;
+
+	            if (filter === this.props.filter) {
+	                return name;
+	            }
+	            return _react2.default.createElement(
+	                'a',
+	                { href: '#', onClick: function onClick(e) {
+	                        e.preventDefault();
+	                        _this2.props.onFilterChange(filter);
+	                    } },
+	                name
+	            );
+	        }
+	    }, {
+	        key: 'render',
+	        value: function render() {
+	            return _react2.default.createElement(
+	                'div',
+	                null,
+	                _react2.default.createElement(
+	                    'p',
+	                    null,
+	                    'Show:',
+	                    '   ',
+	                    this.readFilter('SHOW_ALL', 'All'),
+	                    '   ',
+	                    this.readFilter('SHOW_COMPLETE', 'Completed'),
+	                    '   ',
+	                    this.readFilter('SHOW_ACTIVE', 'Active')
+	                )
+	            );
+	        }
+	    }]);
+
+	    return Footer;
+	}(_react.Component);
+
+	exports.default = Footer;
+
+
+	Footer.PropTypes = {
+	    filter: _react.PropTypes.oneOf(['SHOW_ALL', 'SHOW_COMPLETED', 'SHOW_ACTIVE']).isRequired,
+	    onFilterChange: _react.PropTypes.func.isRequired
 	};
 
 /***/ }

@@ -21,7 +21,11 @@ export default class TodoList extends Component {
 }
 
 TodoList.PropTypes = {
-    onTodoClick: PropTypes.func.isRequired
+    onTodoClick: PropTypes.func.isRequired,
+    todos: PropTypes.arrayOf(PropTypes.shape({
+        text: PropTypes.string.isRequired,
+        completed: PropTypes.bool.isRequired
+    }))
 };
 
 
