@@ -30,7 +30,7 @@ const initialState = {
 // 拆分reducer
 // 每个 reducer 只负责管理全局 state 中它负责的一部分。
 function visibilityFilter(state, action) {
-    if(state === undefined) {
+    if(typeof state === 'undefined') {
         state = initialState.visibilityFilter;
     }
     if(action.type == SET_VISIBILITY_FILTER) {
@@ -39,7 +39,7 @@ function visibilityFilter(state, action) {
     return state;
 }
 function todos(state, action) {
-    if(state === undefined) {
+    if(typeof state === 'undefined') {
         state = [];
     }
     switch (action.type) {
@@ -78,6 +78,3 @@ const todoApp = combineReducers({
 });
 
 export default todoApp;
-
-
-
